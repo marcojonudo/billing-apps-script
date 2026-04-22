@@ -1,4 +1,7 @@
 const HOURS_PER_DAY = 8;
+const EXTRA_HOLIDAYS = [
+  '2026-04-02', // Jueves Santo
+];
 // Fecha de referencia: Lunes, 23 de febrero de 2026 (El mes 1 es febrero en JavaScript)
 // Se usa UTC para evitar problemas con los cambios de horario de verano/invierno al calcular la diferencia de días.
 const REFERENCE_ON_CALL_DATE_UTC = Date.UTC(2026, 1, 23);
@@ -86,10 +89,10 @@ function generateMonthlySchedule(targetDate, holidaysStart, holidaysEnd) {
       reason = 'Vacaciones';
     }
 
-    schedule.push({ 
-      formattedDate: formattedDate, 
-      dayName: dayShortNames[dayOfWeek], 
-      hours: hours, 
+    schedule.push({
+      formattedDate: formattedDate,
+      dayName: dayShortNames[dayOfWeek],
+      hours: hours,
       absenceReason: reason,
       isOnCall: isOnCall
     });
@@ -105,6 +108,9 @@ function generateMonthlySchedule(targetDate, holidaysStart, holidaysEnd) {
 function getPublicHolidays(year) {
   const apiUrl = `https://date.nager.at/api/v3/PublicHolidays/${year}/ES`;
   const holidaysSet = new Set();
+
+  EXTRA_HOLIDAYS.forEach(date => holidaysSet.add(date));
+
   try {
     const response = UrlFetchApp.fetch(apiUrl, { 'muteHttpExceptions': true });
     if (response.getResponseCode() === 200) {
