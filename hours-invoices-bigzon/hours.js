@@ -1,10 +1,30 @@
 const HOURS_PER_DAY = 8;
 const EXTRA_HOLIDAYS = [
-  '2026-04-02', // Jueves Santo
+  '2026-04-02' // Jueves Santo
 ];
-// Fecha de referencia: Lunes, 23 de febrero de 2026 (El mes 1 es febrero en JavaScript)
-// Se usa UTC para evitar problemas con los cambios de horario de verano/invierno al calcular la diferencia de días.
-const REFERENCE_ON_CALL_DATE_UTC = Date.UTC(2026, 1, 23);
+
+const EXTRA_VACATIONS = [
+  '2026-06-03', // Vacaciones
+  '2026-06-08', // Vacaciones
+  '2026-08-10', // Vacaciones
+  '2026-08-11', // Vacaciones
+  '2026-08-12', // Vacaciones
+  '2026-08-13', // Vacaciones
+  '2026-08-14', // Vacaciones
+  '2026-08-15', // Vacaciones
+  '2026-08-16', // Vacaciones
+  '2026-08-17', // Vacaciones
+  '2026-08-18', // Vacaciones
+  '2026-08-19', // Vacaciones
+  '2026-08-20', // Vacaciones
+  '2026-08-21', // Vacaciones
+  '2026-08-22'  // Vacaciones
+];
+// Fechas de inicio de las semanas de guardia (formato 'YYYY-MM-DD').
+// Cada guardia tiene una duración de 7 días (una semana) a partir de la fecha indicada.
+const ON_CALL_START_DATES = [
+  '2026-06-15'
+];
 
 /**
  * Función principal mejorada. Genera los horarios para un número determinado de meses.
@@ -73,9 +93,22 @@ function generateMonthlySchedule(targetDate, holidaysStart, holidaysEnd) {
 
     // Lógica para determinar si el día actual cae en una semana de guardia
     const currentUtcDate = Date.UTC(year, month, day);
-    const diffInDays = Math.floor((currentUtcDate - REFERENCE_ON_CALL_DATE_UTC) / (1000 * 60 * 60 * 24));
-    const weekDiff = Math.floor(diffInDays / 7);
-    const isOnCall = (Math.abs(weekDiff) % 2) === 0;
+    let isOnCall = false;
+    for (const startDateStr of ON_CALL_START_DATES) {
+      const parts = startDateStr.split('-');
+      const startYear = parseInt(parts[0], 10);
+      const startMonth = parseInt(parts[1], 10) - 1;
+      const startDay = parseInt(parts[2], 10);
+      const startUtcDate = Date.UTC(startYear, startMonth, startDay);
+      
+      const diffInDays = Math.floor((currentUtcDate - startUtcDate) / (1000 * 60 * 60 * 24));
+      
+      // Una guardia dura exactamente 1 semana (7 días)
+      if (diffInDays >= 0 && diffInDays < 7) {
+        isOnCall = true;
+        break;
+      }
+    }
 
     if (dayOfWeek === 0 || dayOfWeek === 6) {
       hours = 0;
@@ -83,7 +116,7 @@ function generateMonthlySchedule(targetDate, holidaysStart, holidaysEnd) {
     } else if (holidaysSet.has(dateStringISO)) {
       hours = 0;
       reason = 'Festivo';
-    } else if (holidaysStart && holidaysEnd && currentDate >= holidaysStart && currentDate <= holidaysEnd) {
+    } else if (EXTRA_VACATIONS.includes(dateStringISO) || (holidaysStart && holidaysEnd && currentDate >= holidaysStart && currentDate <= holidaysEnd)) {
       // Esta condición solo se cumple si NO es fin de semana NI festivo.
       hours = 0;
       reason = 'Vacaciones';
